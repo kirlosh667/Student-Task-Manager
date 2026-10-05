@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTrack — Modern Student Task & Study Manager</title>
+    <meta name="description" content="EduTrack is a sleek, responsive student task management dashboard with subject organization, deadline tracking, progress statistics, and local storage.">
+    <meta name="keywords" content="student task manager, homework planner, assignment tracker, study dashboard, todo list">
+    <meta name="author" content="EduTrack">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Canvas Confetti CDN for celebration effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container" id="app">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <i data-lucide="graduation-cap"></i>
+                    </div>
+                    <div class="brand-text">
+                        <h2>Edu<span>Track</span></h2>
+                        <span class="badge-pro">Student Pro</span>
+                    </div>
+                </div>
+                <button class="btn-icon mobile-close-btn" id="closeSidebarBtn" aria-label="Close Sidebar">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <!-- Student Profile Widget -->
+            <div class="user-profile-card" id="sidebarProfileCard" role="button" tabindex="0" title="View & Edit Profile">
+                <div class="avatar-wrapper">
+                    <img id="userAvatarImg" src="https://api.dicebear.com/7.x/bottts/svg?seed=Alex&backgroundColor=6366f1" alt="Student Avatar" class="user-avatar">
+                    <span class="status-indicator online"></span>
+                </div>
+                <div class="user-info">
+                    <h4 id="userNameDisplay">Alex Morgan</h4>
+                    <p id="userMajorDisplay">Computer Science • Year 2</p>
+                </div>
+                <button class="btn-icon mini-action" aria-label="Edit Profile">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN MENU</div>
+                <ul class="nav-list">
+                    <li class="nav-item active" data-view="dashboard">
+                        <a href="#dashboard" class="nav-link">
+                            <i data-lucide="layout-dashboard"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-view="tasks">
+                        <a href="#tasks" class="nav-link">
+                            <i data-lucide="check-square"></i>
+                            <span>All Tasks</span>
+                            <span class="nav-badge" id="navPendingBadge">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-view="subjects">
+                        <a href="#subjects" class="nav-link">
+                            <i data-lucide="book-open"></i>
+                            <span>Subjects</span>
+                            <span class="nav-badge count" id="navSubjectsBadge">6</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-view="pomodoro">
+                        <a href="#pomodoro" class="nav-link">
+                            <i data-lucide="timer"></i>
+                            <span>Focus Timer</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-view="settings">
+                        <a href="#settings" class="nav-link">
+                            <i data-lucide="settings"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="nav-section-title">QUICK FILTERS</div>
+                <ul class="quick-filter-list">
+                    <li>
+                        <button class="quick-filter-btn" data-filter="priority" data-value="High">
+                            <span class="dot high"></span> High Priority
+                            <span class="count" id="countHighPriority">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="quick-filter-btn" data-filter="status" data-value="overdue">
+                            <span class="dot overdue"></span> Overdue Tasks
+                            <span class="count alert" id="countOverdue">0</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="quick-filter-btn" data-filter="status" data-value="today">
+                            <span class="dot today"></span> Due Today
+                            <span class="count" id="countDueToday">0</span>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Sidebar Footer Study Quote / Widget -->
+            <div class="sidebar-footer">
+                <div class="study-streak-card">
+                    <div class="streak-icon">🔥</div>
+                    <div class="streak-info">
+                        <h5>Daily Goal Pace</h5>
+                        <div class="streak-bar-bg">
+                            <div class="streak-bar-fill" id="dailyGoalBar" style="width: 65%;"></div>
+                        </div>
+                        <span class="streak-caption" id="dailyGoalCaption">3 of 5 tasks done today</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Top Navbar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="btn-icon mobile-menu-btn" id="openSidebarBtn" aria-label="Open Navigation">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="search-box">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="globalSearchInput" placeholder="Search tasks, subjects, notes... (Ctrl + K)" autocomplete="off">
+                        <button class="search-clear-btn" id="clearSearchBtn" aria-label="Clear Search" style="display: none;">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <!-- Quick Add Button -->
+                    <button class="btn btn-primary" id="btnOpenAddTaskModal">
+                        <i data-lucide="plus"></i>
+                        <span class="hide-sm">New Task</span>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button class="btn-icon theme-toggle" id="themeToggleBtn" aria-label="Toggle Dark / Light Theme" title="Toggle Theme">
+                        <i data-lucide="moon" class="moon-icon"></i>
+                        <i data-lucide="sun" class="sun-icon"></i>
+                    </button>
+
+                    <!-- Profile Quick Dropdown -->
+                    <div class="profile-header-btn" id="headerProfileTrigger" tabindex="0">
+                        <img id="headerAvatarImg" src="https://api.dicebear.com/7.x/bottts/svg?seed=Alex&backgroundColor=6366f1" alt="Avatar" class="mini-avatar">
+                        <div class="header-name-box hide-sm">
+                            <span class="name" id="headerNameDisplay">Alex Morgan</span>
+                            <span class="role">Student</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Views Container -->
+            <main class="content-body">
+                <!-- VIEW 1: DASHBOARD -->
+                <section class="view-pane active" id="view-dashboard">
+                    <!-- Greeting & Quick Banner -->
+                    <div class="dashboard-greeting-row">
+                        <div class="greeting-text">
+                            <h1 id="greetingTitle">Welcome back, Alex! 👋</h1>
+                            <p id="greetingSubtitle">Here is your academic progress and upcoming deadlines for today.</p>
+                        </div>
+                        <div class="greeting-actions">
+                            <div class="date-chip" id="currentDateChip">
+                                <i data-lucide="calendar"></i>
+                                <span id="currentDateDisplay">Monday, Oct 5, 2026</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Overdue Alert Banner (dynamic) -->
+                    <div class="alert-banner overdue-alert" id="overdueAlertBanner" style="display: none;">
+                        <div class="alert-icon">
+                            <i data-lucide="alert-triangle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h4 id="overdueAlertTitle">Attention: You have 2 overdue assignments!</h4>
+                            <p id="overdueAlertDesc">Please review and complete them as soon as possible to stay on track.</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" id="viewOverdueBtn">View Overdue</button>
+                    </div>
+
+                    <!-- Statistics Cards Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card total">
+                            <div class="stat-icon-wrapper">
+                                <i data-lucide="layers"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Total Tasks</span>
+                                <h3 class="stat-value" id="statTotalTasks">0</h3>
+                                <div class="stat-meta">
+                                    <span class="stat-trend positive"><i data-lucide="trending-up"></i> All registered</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card pending">
+                            <div class="stat-icon-wrapper">
+                                <i data-lucide="clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Pending</span>
+                                <h3 class="stat-value" id="statPendingTasks">0</h3>
+                                <div class="stat-meta">
+                                    <span class="stat-trend"><i data-lucide="alert-circle"></i> Waiting to start</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card in-progress">
+                            <div class="stat-icon-wrapper">
+                                <i data-lucide="loader"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">In Progress</span>
+                                <h3 class="stat-value" id="statInProgressTasks">0</h3>
+                                <div class="stat-meta">
+                                    <span class="stat-trend active"><i data-lucide="activity"></i> Currently working</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card completed">
+                            <div class="stat-icon-wrapper">
+                                <i data-lucide="check-circle-2"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">Completed</span>
+                                <h3 class="stat-value" id="statCompletedTasks">0</h3>
+                                <div class="stat-meta">
+                                    <span class="stat-trend positive" id="statCompletionRate">0% Rate</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Main Columns -->
+                    <div class="dashboard-columns">
+                        <!-- Left Column: Upcoming Deadlines & Priority Tasks -->
+                        <div class="col-main">
+                            <!-- Section: Upcoming Deadlines -->
+                            <div class="content-card">
+                                <div class="card-header">
+                                    <div class="card-title-group">
+                                        <i data-lucide="flame" class="icon-urgent"></i>
+                                        <div>
+                                            <h3>Upcoming Deadlines</h3>
+                                            <p class="subtitle">Tasks due today, tomorrow, and this week</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn-text-action" id="dashViewAllTasksBtn">
+                                        View All <i data-lucide="arrow-right"></i>
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="task-list-mini" id="upcomingDeadlinesList">
+                                        <!-- Rendered by JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Active Tasks Preview -->
+                            <div class="content-card">
+                                <div class="card-header">
+                                    <div class="card-title-group">
+                                        <i data-lucide="list-todo"></i>
+                                        <div>
+                                            <h3>Recently Active Tasks</h3>
+                                            <p class="subtitle">Tasks in progress or recently added</p>
+                                        </div>
+                                    </div>
+                                    <div class="header-filters-mini">
+                                        <button class="filter-pill active" data-dash-filter="all">All</button>
+                                        <button class="filter-pill" data-dash-filter="Pending">Pending</button>
+                                        <button class="filter-pill" data-dash-filter="In Progress">In Progress</button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="task-cards-container" id="dashRecentTasksList">
+                                        <!-- Rendered by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Subject Progress, Pomodoro Widget, Motivational Quote -->
+                        <div class="col-side">
+                            <!-- Overall Progress Ring Card -->
+                            <div class="content-card progress-overview-card">
+                                <div class="card-header">
+                                    <h3>Overall Completion</h3>
+                                </div>
+                                <div class="card-body progress-center">
+                                    <div class="circular-progress-box">
+                                        <svg class="progress-ring" width="140" height="140">
+                                            <circle class="progress-ring-bg" stroke-width="10" cx="70" cy="70" r="56"></circle>
+                                            <circle class="progress-ring-fill" id="overviewProgressRing" stroke-width="10" cx="70" cy="70" r="56"></circle>
+                                        </svg>
+                                        <div class="progress-ring-text">
+                                            <span class="pct" id="overviewProgressPct">0%</span>
+                                            <span class="pct-label">Completed</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress-details-grid">
+                                        <div class="p-detail">
+                                            <span class="p-dot pending"></span>
+                                            <span class="p-label">Pending</span>
+                                            <strong id="ringPendingNum">0</strong>
+                                        </div>
+                                        <div class="p-detail">
+                                            <span class="p-dot in-progress"></span>
+                                            <span class="p-label">In Progress</span>
+                                            <strong id="ringInProgressNum">0</strong>
+                                        </div>
+                                        <div class="p-detail">
+                                            <span class="p-dot completed"></span>
+                                            <span class="p-label">Completed</span>
+                                            <strong id="ringCompletedNum">0</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subject Workload Card -->
+                            <div class="content-card">
+                                <div class="card-header">
+                                    <div class="card-title-group">
+                                        <i data-lucide="pie-chart"></i>
+                                        <div>
+                                            <h3>Subject Breakdown</h3>
+                                            <p class="subtitle">Task distribution by course</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn-text-action" id="dashViewSubjectsBtn">Manage</button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="subject-progress-list" id="dashSubjectProgressList">
+                                        <!-- Rendered by JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Student Tips / Quote -->
+                            <div class="content-card quote-card">
+                                <div class="quote-icon"><i data-lucide="sparkles"></i></div>
+                                <blockquote id="dailyQuoteText">"Success is the sum of small efforts, repeated day in and day out."</blockquote>
+                                <cite id="dailyQuoteAuthor">— Robert Collier</cite>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: ALL TASKS (Full Management View) -->
+                <section class="view-pane" id="view-tasks">
+                    <div class="section-header-bar">
+                        <div class="header-titles">
+                            <h2>Task Management</h2>
+                            <p>Organize, filter, track, and complete all your course assignments</p>
+                        </div>
+                        <div class="header-controls">
+                            <button class="btn btn-primary" id="btnOpenAddTaskModal2">
+                                <i data-lucide="plus"></i> Add New Task
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter & Search Toolbar -->
+                    <div class="tasks-toolbar">
+                        <!-- Status Tabs -->
+                        <div class="status-tab-group" id="tasksStatusTabs">
+                            <button class="tab-btn active" data-status="All">
+                                <span>All Tasks</span>
+                                <span class="tab-count" id="tabCountAll">0</span>
+                            </button>
+                            <button class="tab-btn" data-status="Pending">
+                                <span>Pending</span>
+                                <span class="tab-count" id="tabCountPending">0</span>
+                            </button>
+                            <button class="tab-btn" data-status="In Progress">
+                                <span>In Progress</span>
+                                <span class="tab-count" id="tabCountInProgress">0</span>
+                            </button>
+                            <button class="tab-btn" data-status="Completed">
+                                <span>Completed</span>
+                                <span class="tab-count" id="tabCountCompleted">0</span>
+                            </button>
+                        </div>
+
+                        <!-- Secondary Filters & Sorters -->
+                        <div class="filter-controls-row">
+                            <div class="filter-group">
+                                <label for="filterSubjectSelect"><i data-lucide="book"></i> Subject:</label>
+                                <select id="filterSubjectSelect" class="form-select-sm">
+                                    <option value="All">All Subjects</option>
+                                    <!-- Dynamic options -->
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="filterPrioritySelect"><i data-lucide="flag"></i> Priority:</label>
+                                <select id="filterPrioritySelect" class="form-select-sm">
+                                    <option value="All">All Priorities</option>
+                                    <option value="High">High Priority</option>
+                                    <option value="Medium">Medium Priority</option>
+                                    <option value="Low">Low Priority</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label for="sortTasksSelect"><i data-lucide="arrow-up-down"></i> Sort By:</label>
+                                <select id="sortTasksSelect" class="form-select-sm">
+                                    <option value="due-asc">Due Date (Soonest first)</option>
+                                    <option value="due-desc">Due Date (Furthest first)</option>
+                                    <option value="priority-desc">Priority (High to Low)</option>
+                                    <option value="created-desc">Date Created (Newest)</option>
+                                    <option value="title-asc">Title (A-Z)</option>
+                                </select>
+                            </div>
+
+                            <!-- Layout View Switcher -->
+                            <div class="view-layout-toggle" role="group" aria-label="Layout View">
+                                <button class="layout-btn active" id="layoutGridBtn" title="Grid View" aria-label="Grid View">
+                                    <i data-lucide="layout-grid"></i>
+                                </button>
+                                <button class="layout-btn" id="layoutListBtn" title="List View" aria-label="List View">
+                                    <i data-lucide="list"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Filter Badges Bar -->
+                    <div class="active-filters-chips" id="activeFilterChipsBar" style="display: none;">
+                        <span class="chip-label">Filtered by:</span>
+                        <div class="chips-list" id="chipsListContainer"></div>
+                        <button class="btn-clear-all-filters" id="resetAllFiltersBtn">Reset Filters</button>
+                    </div>
+
+                    <!-- Tasks Display Grid/List -->
+                    <div class="tasks-container layout-grid" id="allTasksGrid">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Empty State Placeholder -->
+                    <div class="empty-state" id="tasksEmptyState" style="display: none;">
+                        <div class="empty-icon-box">
+                            <i data-lucide="clipboard-list"></i>
+                        </div>
+                        <h3 id="emptyStateTitle">No tasks found</h3>
+                        <p id="emptyStateDesc">You're all caught up or no tasks match your active filters.</p>
+                        <button class="btn btn-primary" id="emptyStateAddBtn">
+                            <i data-lucide="plus"></i> Add New Task
+                        </button>
+                    </div>
+                </section>
+
+                <!-- VIEW 3: SUBJECTS -->
+                <section class="view-pane" id="view-subjects">
+                    <div class="section-header-bar">
+                        <div class="header-titles">
+                            <h2>Academic Subjects & Courses</h2>
+                            <p>Manage your enrolled subjects, color codes, and view tasks per course</p>
+                        </div>
+                        <div class="header-controls">
+                            <button class="btn btn-primary" id="btnOpenAddSubjectModal">
+                                <i data-lucide="folder-plus"></i> Add Subject
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="subjects-grid" id="subjectsCardGrid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </section>
+
+                <!-- VIEW 4: FOCUS / POMODORO TIMER -->
+                <section class="view-pane" id="view-pomodoro">
+                    <div class="section-header-bar">
+                        <div class="header-titles">
+                            <h2>Study Focus Timer</h2>
+                            <p>Boost your productivity with the Pomodoro technique</p>
+                        </div>
+                    </div>
+
+                    <div class="pomodoro-wrapper">
+                        <div class="pomodoro-card">
+                            <div class="pomodoro-modes">
+                                <button class="pomo-mode-btn active" data-time="25" data-mode="pomodoro">Focus (25m)</button>
+                                <button class="pomo-mode-btn" data-time="5" data-mode="shortBreak">Short Break (5m)</button>
+                                <button class="pomo-mode-btn" data-time="15" data-mode="longBreak">Long Break (15m)</button>
+                            </div>
+
+                            <div class="timer-display-ring">
+                                <div class="timer-time" id="timerClockDisplay">25:00</div>
+                                <span class="timer-status-text" id="timerModeLabel">Time to concentrate!</span>
+                            </div>
+
+                            <div class="timer-controls">
+                                <button class="btn-timer-primary" id="timerStartBtn">
+                                    <i data-lucide="play" id="timerPlayIcon"></i>
+                                    <span id="timerPlayText">Start Focus</span>
+                                </button>
+                                <button class="btn-timer-secondary" id="timerResetBtn" title="Reset Timer">
+                                    <i data-lucide="rotate-ccw"></i>
+                                </button>
+                            </div>
+
+                            <div class="pomo-task-selector">
+                                <label for="pomoLinkedTaskSelect"><i data-lucide="check-circle"></i> Link to a task:</label>
+                                <select id="pomoLinkedTaskSelect" class="form-select">
+                                    <option value="">-- No specific task --</option>
+                                </select>
+                            </div>
+
+                            <div class="pomo-stats-row">
+                                <div class="pomo-stat-item">
+                                    <span class="pomo-num" id="pomoSessionsCount">0</span>
+                                    <span class="pomo-lbl">Sessions Completed</span>
+                                </div>
+                                <div class="pomo-stat-item">
+                                    <span class="pomo-num" id="pomoTotalFocusMinutes">0</span>
+                                    <span class="pomo-lbl">Focus Minutes</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 5: SETTINGS -->
+                <section class="view-pane" id="view-settings">
+                    <div class="section-header-bar">
+                        <div class="header-titles">
+                            <h2>Application Settings</h2>
+                            <p>Customize your profile, preferences, theme, and data storage</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-layout">
+                        <!-- Profile Settings Card -->
+                        <div class="content-card settings-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <i data-lucide="user"></i>
+                                    <div>
+                                        <h3>Student Profile</h3>
+                                        <p class="subtitle">Personalize how your dashboard looks</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form id="profileSettingsForm" class="settings-form">
+                                    <div class="form-row">
+                                        <div class="avatar-picker-group">
+                                            <img id="settingsAvatarPreview" src="https://api.dicebear.com/7.x/bottts/svg?seed=Alex&backgroundColor=6366f1" alt="Avatar Preview" class="settings-avatar">
+                                            <div class="avatar-options">
+                                                <label>Choose Avatar Style:</label>
+                                                <div class="avatar-seeds" id="avatarSeedsContainer">
+                                                    <!-- Seed options -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-grid-2">
+                                        <div class="form-group">
+                                            <label for="settingsStudentName">Full Name</label>
+                                            <input type="text" id="settingsStudentName" class="form-input" required placeholder="e.g. Alex Morgan">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="settingsStudentMajor">Major / Grade</label>
+                                            <input type="text" id="settingsStudentMajor" class="form-input" placeholder="e.g. Computer Science • Year 2">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-grid-2">
+                                        <div class="form-group">
+                                            <label for="settingsDailyTaskGoal">Daily Completed Task Target</label>
+                                            <input type="number" id="settingsDailyTaskGoal" class="form-input" min="1" max="20" value="5">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="settingsDefaultPriority">Default Task Priority</label>
+                                            <select id="settingsDefaultPriority" class="form-select">
+                                                <option value="Low">Low</option>
+                                                <option value="Medium" selected>Medium</option>
+                                                <option value="High">High</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i data-lucide="save"></i> Save Profile
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Preferences & Appearance Card -->
+                        <div class="content-card settings-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <i data-lucide="palette"></i>
+                                    <div>
+                                        <h3>Appearance & Sound</h3>
+                                        <p class="subtitle">Theme mode and audio feedback settings</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="setting-toggle-row">
+                                    <div class="toggle-info">
+                                        <strong>Dark Mode</strong>
+                                        <p>Toggle between sleek dark mode and bright daylight theme</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="settingsThemeSwitch">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-toggle-row">
+                                    <div class="toggle-info">
+                                        <strong>Sound Effects & Chimes</strong>
+                                        <p>Play pleasant micro-audio chimes on task completion and timer end</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="settingsSoundSwitch" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="setting-toggle-row">
+                                    <div class="toggle-info">
+                                        <strong>Celebration Confetti</strong>
+                                        <p>Burst confetti on completing tasks or clearing all pending work</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="settingsConfettiSwitch" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Management & LocalStorage Card -->
+                        <div class="content-card settings-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <i data-lucide="database"></i>
+                                    <div>
+                                        <h3>Data Management</h3>
+                                        <p class="subtitle">Backup, restore, or reset your local browser storage</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="data-actions-grid">
+                                    <button class="btn btn-outline" id="exportDataBtn">
+                                        <i data-lucide="download"></i> Export Data (JSON)
+                                    </button>
+                                    <label class="btn btn-outline file-input-label">
+                                        <i data-lucide="upload"></i> Import Backup (JSON)
+                                        <input type="file" id="importDataInput" accept=".json" style="display: none;">
+                                    </label>
+                                    <button class="btn btn-outline" id="seedDemoDataBtn">
+                                        <i data-lucide="refresh-cw"></i> Load Sample Tasks
+                                    </button>
+                                    <button class="btn btn-danger" id="clearAllDataBtn">
+                                        <i data-lucide="trash-2"></i> Reset All Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Task Add / Edit Modal -->
+    <div class="modal-overlay" id="taskModal" aria-hidden="true" role="dialog">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-box">
+                    <div class="modal-icon-badge" id="modalIconBadge">
+                        <i data-lucide="plus" id="taskModalHeaderIcon"></i>
+                    </div>
+                    <div>
+                        <h3 id="taskModalTitle">Add New Task</h3>
+                        <p class="subtitle" id="taskModalSubtitle">Fill in the details for your academic task</p>
+                    </div>
+                </div>
+                <button class="btn-icon modal-close-btn" id="closeTaskModalBtn" aria-label="Close modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form id="taskForm" class="modal-body">
+                <input type="hidden" id="taskIdInput">
+
+                <!-- Title -->
+                <div class="form-group">
+                    <label for="taskTitleInput">Task Title <span class="required">*</span></label>
+                    <input type="text" id="taskTitleInput" class="form-input" placeholder="e.g. Complete Calculus Problem Set #4" required maxlength="120">
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="taskDescInput">Description / Notes</label>
+                    <textarea id="taskDescInput" class="form-textarea" rows="3" placeholder="Add assignment details, chapter references, submission link notes..."></textarea>
+                </div>
+
+                <!-- Subject & Priority Grid -->
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="taskSubjectSelect">Subject <span class="required">*</span></label>
+                        <select id="taskSubjectSelect" class="form-select" required>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskPrioritySelect">Priority <span class="required">*</span></label>
+                        <select id="taskPrioritySelect" class="form-select" required>
+                            <option value="Low">🟢 Low Priority</option>
+                            <option value="Medium" selected>🟡 Medium Priority</option>
+                            <option value="High">🔴 High Priority</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Due Date & Status Grid -->
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="taskDueDateInput">Due Date & Time <span class="required">*</span></label>
+                        <input type="datetime-local" id="taskDueDateInput" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskStatusSelect">Status <span class="required">*</span></label>
+                        <select id="taskStatusSelect" class="form-select" required>
+                            <option value="Pending">⏳ Pending</option>
+                            <option value="In Progress">⚡ In Progress</option>
+                            <option value="Completed">✅ Completed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Modal Footer Actions -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelTaskModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveTaskSubmitBtn">
+                        <i data-lucide="check"></i> <span id="saveTaskBtnText">Create Task</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Subject Add / Edit Modal -->
+    <div class="modal-overlay" id="subjectModal" aria-hidden="true" role="dialog">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <div class="modal-title-box">
+                    <div class="modal-icon-badge">
+                        <i data-lucide="book-plus"></i>
+                    </div>
+                    <div>
+                        <h3 id="subjectModalTitle">Add New Subject</h3>
+                        <p class="subtitle">Create a course to categorize assignments</p>
+                    </div>
+                </div>
+                <button class="btn-icon modal-close-btn" id="closeSubjectModalBtn" aria-label="Close modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form id="subjectForm" class="modal-body">
+                <input type="hidden" id="subjectIdInput">
+
+                <div class="form-group">
+                    <label for="subjectNameInput">Subject Name <span class="required">*</span></label>
+                    <input type="text" id="subjectNameInput" class="form-input" placeholder="e.g. Data Structures & Algorithms" required maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="subjectCodeInput">Course Code (Optional)</label>
+                    <input type="text" id="subjectCodeInput" class="form-input" placeholder="e.g. CS201" maxlength="15">
+                </div>
+
+                <div class="form-group">
+                    <label>Color Theme</label>
+                    <div class="color-picker-palette" id="subjectColorPalette">
+                        <button type="button" class="color-choice-btn active" data-color="#6366f1" style="--c: #6366f1;"></button>
+                        <button type="button" class="color-choice-btn" data-color="#3b82f6" style="--c: #3b82f6;"></button>
+                        <button type="button" class="color-choice-btn" data-color="#06b6d4" style="--c: #06b6d4;"></button>
+                        <button type="button" class="color-choice-btn" data-color="#10b981" style="--c: #10b981;"></button>
+                        <button type="button" class="color-choice-btn" data-color="#f59e0b" style="--c: #f59e0b;"></button>
+                        <button type="button" class="color-choice-btn" data-color="#ec4899" style="--c: #ec4899;"></button>
+                        <button type="button" class="color-choice-btn" data-color="#8b5cf6" style="--c: #8b5cf6;"></button>
+                        <button type="button" class="color-choice-btn" data-color="#ef4444" style="--c: #ef4444;"></button>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelSubjectModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveSubjectSubmitBtn">
+                        <i data-lucide="check"></i> Save Subject
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Details View Modal -->
+    <div class="modal-overlay" id="taskDetailModal" aria-hidden="true" role="dialog">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-box">
+                    <span class="priority-badge" id="detailPriorityBadge">High</span>
+                    <span class="status-badge" id="detailStatusBadge">Pending</span>
+                </div>
+                <button class="btn-icon modal-close-btn" id="closeDetailModalBtn" aria-label="Close modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body detail-modal-body">
+                <h2 id="detailTaskTitle" class="detail-title">Task Title</h2>
+                <div class="detail-meta-bar">
+                    <div class="meta-item">
+                        <i data-lucide="book"></i>
+                        <span id="detailSubjectTag" class="subject-tag">Subject</span>
+                    </div>
+                    <div class="meta-item">
+                        <i data-lucide="calendar"></i>
+                        <span id="detailDueDate">Oct 12, 2026, 11:59 PM</span>
+                    </div>
+                    <div class="meta-item" id="detailOverdueFlag">
+                        <i data-lucide="alert-circle" class="text-danger"></i>
+                        <span class="text-danger" id="detailOverdueText">Overdue</span>
+                    </div>
+                </div>
+
+                <div class="detail-description-section">
+                    <h4>Description & Notes</h4>
+                    <div id="detailDescription" class="detail-desc-text">No notes provided for this task.</div>
+                </div>
+            </div>
+            <div class="modal-footer space-between">
+                <button class="btn btn-danger" id="detailDeleteBtn">
+                    <i data-lucide="trash-2"></i> Delete
+                </button>
+                <div class="btn-group">
+                    <button class="btn btn-outline" id="detailEditBtn">
+                        <i data-lucide="edit-3"></i> Edit
+                    </button>
+                    <button class="btn btn-primary" id="detailToggleStatusBtn">
+                        <i data-lucide="check"></i> Mark Complete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal-overlay" id="confirmModal" aria-hidden="true" role="dialog">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <div class="modal-icon-badge danger">
+                    <i data-lucide="alert-triangle"></i>
+                </div>
+                <h3 id="confirmModalTitle">Are you sure?</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalDesc">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="confirmCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmProceedBtn">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <!-- Floating Action Button for Mobile -->
+    <button class="floating-add-btn hide-desktop" id="mobileFabBtn" aria-label="Add New Task" title="Add Task">
+        <i data-lucide="plus"></i>
+    </button>
+
+    <!-- Custom JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
